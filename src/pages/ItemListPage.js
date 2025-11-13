@@ -1,6 +1,6 @@
 export const ItemListPage = () => {
   return {
-    content: `
+    content: /*html*/ `
         <div>
             <h1>Item List Page</h1>
         </div>

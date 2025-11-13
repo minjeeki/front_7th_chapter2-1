@@ -1,6 +1,6 @@
 export const ItemDetailPage = () => {
   return {
-    content: `
+    content: /*html*/ `
         <div>
             <h1>Item Detail Page</h1>
         </div>
