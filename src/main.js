@@ -15,6 +15,11 @@ function main() {
   // 페이지 렌더링
   const page = ItemListPage();
   root.innerHTML = Layout(page.content, page.headerOptions);
+
+  // 페이지 초기화 (카테고리 로딩 등)
+  if (page.init) {
+    page.init();
+  }
 }
 
 // 애플리케이션 시작
