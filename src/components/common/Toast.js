@@ -38,3 +38,57 @@ export const Toast = ({ type, message }) => {
     </div>
   `;
 };
+
+// Toast 메시지 표시 함수
+export const showToast = (message, type = "success") => {
+  const toastContainer = document.getElementById("toast-container");
+  if (!toastContainer) {
+    console.warn("toast-container를 찾을 수 없습니다.");
+    return;
+  }
+
+  const toastHTML = Toast({ type, message });
+  const tempDiv = document.createElement("div");
+  tempDiv.innerHTML = toastHTML;
+  const toastElement = tempDiv.firstElementChild;
+
+  // pointer-events를 다시 활성화
+  toastElement.style.pointerEvents = "auto";
+  // 초기 opacity 설정 및 애니메이션
+  toastElement.style.opacity = "0";
+  toastElement.style.transition = "opacity 0.3s ease-in-out";
+
+  toastContainer.appendChild(toastElement);
+
+  // 다음 프레임에서 opacity를 1로 변경하여 페이드인 효과
+  requestAnimationFrame(() => {
+    toastElement.style.opacity = "1";
+  });
+
+  // 3초 후 자동 제거
+  setTimeout(() => {
+    if (toastElement && toastElement.parentNode) {
+      toastElement.style.opacity = "0";
+      toastElement.style.transition = "opacity 0.3s";
+      setTimeout(() => {
+        if (toastElement.parentNode) {
+          toastElement.parentNode.removeChild(toastElement);
+        }
+      }, 300);
+    }
+  }, 3000);
+
+  // 닫기 버튼 이벤트
+  const closeBtn = toastElement.querySelector("#toast-close-btn");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      toastElement.style.opacity = "0";
+      toastElement.style.transition = "opacity 0.3s";
+      setTimeout(() => {
+        if (toastElement.parentNode) {
+          toastElement.parentNode.removeChild(toastElement);
+        }
+      }, 300);
+    });
+  }
+};

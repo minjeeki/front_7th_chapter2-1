@@ -8,7 +8,7 @@ export const Layout = (content, headerOptions) => {
             ${content}
         </main>
         ${Footer()}
-        <div id="toast-container" class="flex flex-col gap-2 items-center justify-center mx-auto" style="width: fit-content;">
+        <div id="toast-container" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 flex flex-col gap-2 items-center" style="width: fit-content; pointer-events: none;">
         </div>
     </div>
   `;
