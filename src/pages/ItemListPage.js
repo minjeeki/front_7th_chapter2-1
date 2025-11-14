@@ -136,83 +136,87 @@ export const ItemListPage = (query = {}) => {
     router.updateQuery(queryParams, true);
   };
 
+  // 필터 리셋 및 상품 로드 공통 함수
+  const resetAndLoadProducts = () => {
+    currentPage = 1;
+    hasMore = true;
+    updateURL();
+    loadProducts(false);
+  };
+
   const updateBreadcrumb = () => {
     const breadcrumbContainer = document.getElementById("category-breadcrumb");
     if (!breadcrumbContainer) return;
 
-    // 기존 내용 중 label은 유지하고, 그 이후 요소들만 제거
-    const label = breadcrumbContainer.querySelector("label");
-    breadcrumbContainer.innerHTML = "";
-    if (label) {
-      breadcrumbContainer.appendChild(label);
-    }
+    let breadcrumbHTML = `<label class="text-sm text-gray-600">카테고리:</label>`;
+    breadcrumbHTML += `<button data-breadcrumb="reset" class="text-xs hover:text-blue-800 hover:underline">전체</button>`;
 
-    // 전체 버튼 추가
-    const resetButton = document.createElement("button");
-    resetButton.setAttribute("data-breadcrumb", "reset");
-    resetButton.className = "text-xs hover:text-blue-800 hover:underline";
-    resetButton.textContent = "전체";
-    breadcrumbContainer.appendChild(resetButton);
-
-    // 1depth가 선택된 경우
     if (selectedCategory1) {
-      const separator1 = document.createElement("span");
-      separator1.className = "text-xs text-gray-400";
-      separator1.textContent = ">";
-      breadcrumbContainer.appendChild(separator1);
+      breadcrumbHTML += `<span class="text-xs text-gray-400">></span>`;
+      breadcrumbHTML += `<button data-breadcrumb="category1" data-category1="${selectedCategory1}" class="text-xs hover:text-blue-800 hover:underline">${selectedCategory1}</button>`;
 
-      const category1Button = document.createElement("button");
-      category1Button.setAttribute("data-breadcrumb", "category1");
-      category1Button.setAttribute("data-category1", selectedCategory1);
-      category1Button.className = "text-xs hover:text-blue-800 hover:underline";
-      category1Button.textContent = selectedCategory1;
-      breadcrumbContainer.appendChild(category1Button);
-
-      // 2depth가 선택된 경우
       if (selectedCategory2) {
-        const separator2 = document.createElement("span");
-        separator2.className = "text-xs text-gray-400";
-        separator2.textContent = ">";
-        breadcrumbContainer.appendChild(separator2);
-
-        const category2Span = document.createElement("span");
-        category2Span.className = "text-xs text-gray-700";
-        category2Span.textContent = selectedCategory2;
-        breadcrumbContainer.appendChild(category2Span);
+        breadcrumbHTML += `<span class="text-xs text-gray-400">></span>`;
+        breadcrumbHTML += `<span class="text-xs text-gray-700">${selectedCategory2}</span>`;
       }
     }
+
+    breadcrumbContainer.innerHTML = breadcrumbHTML;
   };
 
-  const setupBreadcrumbEvents = () => {
+  const setupCategoryEvents = () => {
     const breadcrumbContainer = document.getElementById("category-breadcrumb");
-    if (!breadcrumbContainer) return;
+    const categoryContainer = document.getElementById("category1-container");
 
-    // 이벤트 위임 사용 - 한 번만 등록
-    breadcrumbContainer.addEventListener("click", (e) => {
-      const target = e.target;
-      const breadcrumbType = target.getAttribute("data-breadcrumb");
+    // 브레드크럼 이벤트 위임 - 한 번만 등록
+    if (breadcrumbContainer) {
+      breadcrumbContainer.addEventListener("click", (e) => {
+        const target = e.target;
+        const breadcrumbType = target.getAttribute("data-breadcrumb");
 
-      if (breadcrumbType === "reset") {
-        selectedCategory1 = null;
-        selectedCategory2 = null;
-        currentPage = 1;
-        hasMore = true;
-        updateBreadcrumb();
-        renderCategory1Buttons();
-        updateURL();
-        loadProducts(false);
-      } else if (breadcrumbType === "category1") {
+        if (breadcrumbType === "reset") {
+          selectedCategory1 = null;
+          selectedCategory2 = null;
+          updateBreadcrumb();
+          renderCategory1Buttons();
+          resetAndLoadProducts();
+        } else if (breadcrumbType === "category1") {
+          const category1 = target.getAttribute("data-category1");
+          selectedCategory1 = category1;
+          selectedCategory2 = null;
+          updateBreadcrumb();
+          renderCategory2Buttons(category1);
+          resetAndLoadProducts();
+        }
+      });
+    }
+
+    // 카테고리 버튼 이벤트 위임 - 한 번만 등록
+    if (categoryContainer) {
+      categoryContainer.addEventListener("click", (e) => {
+        const target = e.target.closest("button");
+        if (!target) return;
+
         const category1 = target.getAttribute("data-category1");
-        selectedCategory1 = category1;
-        selectedCategory2 = null;
-        currentPage = 1;
-        hasMore = true;
-        updateBreadcrumb();
-        renderCategory2Buttons(category1);
-        updateURL();
-        loadProducts(false);
-      }
-    });
+        const category2 = target.getAttribute("data-category2");
+
+        // 1depth 카테고리 버튼 클릭
+        if (category1 && !category2) {
+          selectedCategory1 = category1;
+          selectedCategory2 = null;
+          updateBreadcrumb();
+          renderCategory2Buttons(category1);
+          resetAndLoadProducts();
+        }
+        // 2depth 카테고리 버튼 클릭
+        else if (category1 && category2) {
+          selectedCategory1 = category1;
+          selectedCategory2 = category2;
+          updateBreadcrumb();
+          resetAndLoadProducts();
+        }
+      });
+    }
   };
 
   const renderCategory1Buttons = () => {
@@ -223,7 +227,7 @@ export const ItemListPage = (query = {}) => {
     const categoryButtons = Object.keys(categoriesData)
       .map(
         (category1) => `
-        <button data-category1="${category1}" class="category1-filter-btn text-left px-3 py-2 text-sm rounded-md border transition-colors
+        <button data-category1="${category1}" class="text-left px-3 py-2 text-sm rounded-md border transition-colors
            bg-white border-gray-300 text-gray-700 hover:bg-gray-50">
           ${category1}
         </button>
@@ -232,21 +236,6 @@ export const ItemListPage = (query = {}) => {
       .join("");
 
     categoryContainer.innerHTML = categoryButtons;
-
-    // 1depth 카테고리 버튼에 클릭 이벤트 추가
-    categoryContainer.querySelectorAll(".category1-filter-btn").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        const category1 = e.target.getAttribute("data-category1");
-        selectedCategory1 = category1;
-        selectedCategory2 = null;
-        currentPage = 1;
-        hasMore = true;
-        updateBreadcrumb();
-        renderCategory2Buttons(category1);
-        updateURL();
-        loadProducts(false);
-      });
-    });
   };
 
   const renderCategory2Buttons = (category1) => {
@@ -259,7 +248,7 @@ export const ItemListPage = (query = {}) => {
     const categoryButtons = category2List
       .map(
         (category2) => `
-        <button data-category1="${category1}" data-category2="${category2}" class="category2-filter-btn text-left px-3 py-2 text-sm rounded-md border transition-colors
+        <button data-category1="${category1}" data-category2="${category2}" class="text-left px-3 py-2 text-sm rounded-md border transition-colors
            bg-white border-gray-300 text-gray-700 hover:bg-gray-50">
           ${category2}
         </button>
@@ -268,21 +257,6 @@ export const ItemListPage = (query = {}) => {
       .join("");
 
     categoryContainer.innerHTML = categoryButtons;
-
-    // 2depth 카테고리 버튼에 클릭 이벤트 추가
-    categoryContainer.querySelectorAll(".category2-filter-btn").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        const category1 = e.target.getAttribute("data-category1");
-        const category2 = e.target.getAttribute("data-category2");
-        selectedCategory1 = category1;
-        selectedCategory2 = category2;
-        currentPage = 1;
-        hasMore = true;
-        updateBreadcrumb();
-        updateURL();
-        loadProducts(false);
-      });
-    });
   };
 
   const updateProductListStatus = (isLoading) => {
@@ -467,10 +441,7 @@ export const ItemListPage = (query = {}) => {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
           currentSearch = e.target.value.trim();
-          currentPage = 1;
-          hasMore = true;
-          updateURL();
-          loadProducts(false);
+          resetAndLoadProducts();
         }, 300);
       });
     }
@@ -480,10 +451,7 @@ export const ItemListPage = (query = {}) => {
     if (sortSelect) {
       sortSelect.addEventListener("change", (e) => {
         currentSort = e.target.value;
-        currentPage = 1;
-        hasMore = true;
-        updateURL();
-        loadProducts(false);
+        resetAndLoadProducts();
       });
     }
 
@@ -492,10 +460,7 @@ export const ItemListPage = (query = {}) => {
     if (limitSelect) {
       limitSelect.addEventListener("change", (e) => {
         currentLimit = parseInt(e.target.value);
-        currentPage = 1;
-        hasMore = true;
-        updateURL();
-        loadProducts(false);
+        resetAndLoadProducts();
       });
     }
   };
@@ -508,8 +473,8 @@ export const ItemListPage = (query = {}) => {
       const { getCategories } = await import("../api/productApi.js");
       categoriesData = await getCategories();
 
-      // breadcrumb 이벤트 설정 (한 번만)
-      setupBreadcrumbEvents();
+      // 카테고리 이벤트 설정 (한 번만 - 이벤트 위임 사용)
+      setupCategoryEvents();
       updateBreadcrumb();
 
       // 카테고리 버튼 렌더링 (URL에서 복원된 상태에 따라)
@@ -522,23 +487,18 @@ export const ItemListPage = (query = {}) => {
       // 필터 이벤트 설정
       setupFilterEvents();
 
-      // 검색어 입력 필드에 현재 검색어 설정
-      const searchInput = document.getElementById("search-input");
-      if (searchInput) {
-        searchInput.value = currentSearch;
-      }
+      // 필터 상태 복원
+      const restoreFilterState = () => {
+        const searchInput = document.getElementById("search-input");
+        if (searchInput) searchInput.value = currentSearch;
 
-      // 정렬 선택 박스에 현재 정렬 설정
-      const sortSelect = document.getElementById("sort-select");
-      if (sortSelect) {
-        sortSelect.value = currentSort;
-      }
+        const sortSelect = document.getElementById("sort-select");
+        if (sortSelect) sortSelect.value = currentSort;
 
-      // 개수 선택 박스에 현재 개수 설정
-      const limitSelect = document.getElementById("limit-select");
-      if (limitSelect) {
-        limitSelect.value = currentLimit.toString();
-      }
+        const limitSelect = document.getElementById("limit-select");
+        if (limitSelect) limitSelect.value = currentLimit.toString();
+      };
+      restoreFilterState();
 
       // 초기 상품 목록 로드 (내부에서 setupInfiniteScroll 호출됨)
       loadProducts(false);
