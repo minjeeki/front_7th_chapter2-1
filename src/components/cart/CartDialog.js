@@ -1,3 +1,5 @@
+import { QuantitySelector } from "../common/QuantitySelector.js";
+
 // 장바구니 버튼 컴포넌트
 export const CartButton = () => {
   // 로컬 스토리지에서 장바구니 개수 가져오기
@@ -84,21 +86,13 @@ export const CartItem = (item) => {
           ${parseInt(item.price || 0).toLocaleString()}원
         </p>
         <!-- 수량 조절 -->
-        <div class="flex items-center mt-2">
-          <button class="quantity-decrease-btn w-7 h-7 flex items-center justify-center
-       border border-gray-300 rounded-l-md bg-gray-50 hover:bg-gray-100" data-product-id="${item.id}">
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
-            </svg>
-          </button>
-          <input type="number" value="${item.quantity}" min="1" class="quantity-input w-12 h-7 text-center text-sm border-t border-b
-      border-gray-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500" disabled="" data-product-id="${item.id}">
-          <button class="quantity-increase-btn w-7 h-7 flex items-center justify-center
-       border border-gray-300 rounded-r-md bg-gray-50 hover:bg-gray-100" data-product-id="${item.id}">
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-            </svg>
-          </button>
+        <div class="mt-2">
+          ${QuantitySelector(item.quantity || 1, {
+            size: "small",
+            showLabel: false,
+            idPrefix: `quantity-${item.id}`,
+            productId: item.id,
+          })}
         </div>
       </div>
       <!-- 가격 및 삭제 -->

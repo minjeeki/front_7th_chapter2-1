@@ -1,5 +1,6 @@
 import { getProduct, getProducts } from "../api/productApi.js";
 import { AddToCartBtn } from "../components/cart/addToCartBtn.js";
+import { QuantitySelector } from "../components/common/QuantitySelector.js";
 
 export const ItemDetailPage = (productId) => {
   // 로딩 상태의 content
@@ -106,30 +107,14 @@ export const ItemDetailPage = (productId) => {
   };
 
   // 수량 선택 및 액션 컴포넌트
-  const QuantitySelector = (product, quantity = 1) => {
+  const QuantitySelectorWrapper = (product) => {
     return /*html*/ `
       <div class="border-t border-gray-200 p-4">
-        <div class="flex items-center justify-between mb-4">
-          <span class="text-sm font-medium text-gray-900">수량</span>
-          <div class="flex items-center">
-            <button id="quantity-decrease" class="w-8 h-8 flex items-center justify-center border border-gray-300
-               rounded-l-md bg-gray-50 hover:bg-gray-100">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
-              </svg>
-            </button>
-            <input type="number" id="quantity-input" value="${quantity}" min="1" max="${product.stock || 1}" class="w-16 h-8 text-center text-sm border-t border-b border-gray-300
-              focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
-            <button id="quantity-increase" class="w-8 h-8 flex items-center justify-center border border-gray-300
-               rounded-r-md bg-gray-50 hover:bg-gray-100">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-              </svg>
-            </button>
-          </div>
-        </div>
+        ${QuantitySelector({
+          max: product.stock || 1,
+        })}
         <!-- 액션 버튼 -->
-        ${AddToCartBtn(product, quantity, "default", "add-to-cart-btn")}
+        ${AddToCartBtn(product, 1, "default", "add-to-cart-btn")}
       </div>
     `;
   };
@@ -180,7 +165,7 @@ export const ItemDetailPage = (productId) => {
             ${ProductInfo(product)}
           </div>
           <!-- 수량 선택 및 액션 -->
-          ${QuantitySelector(product, 1)}
+          ${QuantitySelectorWrapper(product, 1)}
         </div>
         <!-- 상품 목록으로 이동 -->
         ${BackToProductListButton()}
