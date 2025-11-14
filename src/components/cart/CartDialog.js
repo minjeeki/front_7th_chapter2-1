@@ -1,11 +1,16 @@
 // 장바구니 버튼 컴포넌트
 export const CartButton = () => {
+  // 로컬 스토리지에서 장바구니 개수 가져오기
+  const cartData = getCartData();
+  const itemCount = cartData.items ? cartData.items.length : 0;
+
   return /*html*/ `
     <button id="cart-icon-btn" class="relative p-2 text-gray-700 hover:text-gray-900 transition-colors">
       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
           d="M3 3h2l.4 2M7 13h10l4-8H5.4m2.6 8L6 2H3m4 11v6a1 1 0 001 1h1a1 1 0 001-1v-6M13 13v6a1 1 0 001 1h1a1 1 0 001-1v-6"></path>
         </svg>
+        ${itemCount > 0 ? `<span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">${itemCount}</span>` : ""}
     </button>
   `;
 };
@@ -36,6 +41,8 @@ export const getCartData = () => {
 // localStorage에 장바구니 데이터 저장
 export const saveCartData = (cartData) => {
   localStorage.setItem("shopping_cart", JSON.stringify(cartData));
+  // 커스텀 이벤트 발생 (같은 탭에서도 동작)
+  window.dispatchEvent(new CustomEvent("cartUpdated", { detail: cartData }));
 };
 
 // 빈 장바구니 컴포넌트
@@ -212,6 +219,9 @@ export const initCartDialog = () => {
       cartIconBtn.addEventListener("click", window.openCartDialog);
       cartIconBtn.dataset.cartListener = "true";
     }
+    // 장바구니 버튼은 이벤트 리스너로 자동 업데이트됨
+    // 초기 렌더링 시 한 번만 업데이트
+    window.dispatchEvent(new CustomEvent("cartUpdated"));
     return;
   }
 
@@ -220,6 +230,34 @@ export const initCartDialog = () => {
   if (!modalOverlay) {
     return; // 모달이 없으면 초기화하지 않음 (Header에서 추가해야 함)
   }
+
+  // 장바구니 버튼 업데이트 함수
+  const updateCartButton = () => {
+    const cartData = getCartData();
+    const itemCount = cartData.items ? cartData.items.length : 0;
+    const cartIconBtn = document.getElementById("cart-icon-btn");
+
+    if (cartIconBtn) {
+      const existingBadge = cartIconBtn.querySelector("span");
+
+      if (itemCount > 0) {
+        if (existingBadge) {
+          existingBadge.textContent = itemCount;
+        } else {
+          const badge = document.createElement("span");
+          badge.className =
+            "absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center";
+          badge.textContent = itemCount;
+          cartIconBtn.appendChild(badge);
+        }
+      } else if (existingBadge) {
+        existingBadge.remove();
+      }
+    }
+  };
+
+  // 장바구니 업데이트 이벤트 리스너 등록
+  window.addEventListener("cartUpdated", updateCartButton);
 
   // 장바구니 컨텐츠 업데이트 함수 (외부에서도 사용 가능하도록 export)
   window.updateCartContent = () => {
@@ -252,6 +290,7 @@ export const initCartDialog = () => {
         countSpan.remove();
       }
     }
+    // 장바구니 버튼은 이벤트 리스너로 자동 업데이트됨
   };
 
   // 모달 열기 함수 (외부에서도 사용 가능하도록 export)
@@ -381,6 +420,8 @@ export const initCartDialog = () => {
 
   // 초기 렌더링 시 장바구니 컨텐츠 업데이트
   window.updateCartContent();
+  // 장바구니 버튼은 이벤트 리스너로 자동 업데이트됨
+  window.dispatchEvent(new CustomEvent("cartUpdated"));
 
   isInitialized = true;
 };
