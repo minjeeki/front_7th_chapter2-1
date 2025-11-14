@@ -106,31 +106,6 @@ export const ItemDetailPage = (productId) => {
     `;
   };
 
-  // 수량 선택 및 액션 컴포넌트
-  const QuantitySelectorWrapper = (product) => {
-    return /*html*/ `
-      <div class="border-t border-gray-200 p-4">
-        ${QuantitySelector({
-          max: product.stock || 1,
-        })}
-        <!-- 액션 버튼 -->
-        ${AddToCartBtn(product, 1, "default", "add-to-cart-btn")}
-      </div>
-    `;
-  };
-
-  // 상품 목록으로 이동 버튼 컴포넌트
-  const BackToProductListButton = () => {
-    return /*html*/ `
-      <div class="mb-6">
-        <button class="block w-full text-center bg-gray-100 text-gray-700 py-3 px-4 rounded-md
-          hover:bg-gray-200 transition-colors go-to-product-list">
-          상품 목록으로 돌아가기
-        </button>
-      </div>
-    `;
-  };
-
   // 상품 정보를 렌더링하는 함수
   const renderProductContent = (product) => {
     return /*html*/ `
@@ -165,10 +140,21 @@ export const ItemDetailPage = (productId) => {
             ${ProductInfo(product)}
           </div>
           <!-- 수량 선택 및 액션 -->
-          ${QuantitySelectorWrapper(product, 1)}
+          <div class="border-t border-gray-200 p-4">
+            ${QuantitySelector({
+              max: product.stock || 1,
+            })}
+            <!-- 액션 버튼 -->
+            ${AddToCartBtn(product, 1, "default", "add-to-cart-btn")}
+          </div>
         </div>
         <!-- 상품 목록으로 이동 -->
-        ${BackToProductListButton()}
+        <div class="mb-6">
+          <button class="block w-full text-center bg-gray-100 text-gray-700 py-3 px-4 rounded-md
+            hover:bg-gray-200 transition-colors go-to-product-list">
+            상품 목록으로 돌아가기
+          </button>
+        </div>
         <!-- 관련 상품 -->
         <div class="bg-white rounded-lg shadow-sm">
           <div class="p-4 border-b border-gray-200">

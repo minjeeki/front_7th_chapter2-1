@@ -1,31 +1,7 @@
 import { AddToCartBtn } from "../components/cart/addToCartBtn.js";
 import { router } from "../router.js";
 
-const CategoryBreadcrumb = () => {
-  return /*html*/ `
-    <div class="flex items-center gap-2" id="category-breadcrumb">
-      <label class="text-sm text-gray-600">카테고리:</label>
-      <button data-breadcrumb="reset" class="text-xs hover:text-blue-800 hover:underline">전체</button>
-    </div>
-  `;
-};
-
-const ProductListStatus = () => {
-  return /*html*/ `
-    <div class="text-center py-4" id="product-list-status">
-      <div class="inline-flex items-center">
-        <svg class="animate-spin h-5 w-5 text-blue-600 mr-2" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        <span class="text-sm text-gray-600">상품을 불러오는 중...</span>
-      </div>
-    </div>
-  `;
-};
-
-const getProductListStatusContent = (isLoading) => {
+const ProductListStatus = (isLoading = true) => {
   if (isLoading) {
     return /*html*/ `
       <div class="inline-flex items-center">
@@ -65,7 +41,10 @@ const searchAndFilter = () => {
       <div class="space-y-3">
         <!-- 카테고리 필터 -->
         <div class="space-y-2">
-          ${CategoryBreadcrumb()}
+          <div class="flex items-center gap-2" id="category-breadcrumb">
+            <label class="text-sm text-gray-600">카테고리:</label>
+            <button data-breadcrumb="reset" class="text-xs hover:text-blue-800 hover:underline">전체</button>
+          </div>
           <!-- 1depth 카테고리 -->
           <div class="flex flex-wrap gap-2" id="category1-container">
             <div class="text-sm text-gray-500 italic">카테고리 로딩 중...</div>
@@ -296,7 +275,7 @@ export const ItemListPage = (query = {}) => {
     if (!statusContainer) return;
 
     // 최상위 div는 유지하고 내부 내용만 업데이트
-    statusContainer.innerHTML = getProductListStatusContent(isLoading);
+    statusContainer.innerHTML = ProductListStatus(isLoading);
   };
 
   const renderProducts = (products, total) => {
@@ -490,7 +469,9 @@ export const ItemListPage = (query = {}) => {
         <div class="grid grid-cols-2 gap-4 mb-6" id="products-grid">
         </div>
 
-        ${ProductListStatus()}
+        <div class="text-center py-4" id="product-list-status">
+          ${ProductListStatus(true)}
+        </div>
       </div>
     </div>
     `,
