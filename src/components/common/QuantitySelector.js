@@ -62,3 +62,62 @@ export const QuantitySelector = (quantityOrOptions = 1, options = {}) => {
     ${showLabel ? `</div>` : ""}
   `;
 };
+
+// QuantitySelector 이벤트 리스너 설정 함수
+export const initQuantitySelector = (idPrefix = "quantity", options = {}) => {
+  const { max = null, onQuantityChange = null } = options;
+
+  const quantityInput = document.getElementById(`${idPrefix}-input`);
+  const quantityDecrease = document.getElementById(`${idPrefix}-decrease`);
+  const quantityIncrease = document.getElementById(`${idPrefix}-increase`);
+
+  if (!quantityInput || !quantityDecrease || !quantityIncrease) {
+    return null;
+  }
+
+  let currentQuantity = parseInt(quantityInput.value) || 1;
+
+  const updateQuantity = (newQuantity) => {
+    const min = 1;
+    const maxValue = max || Infinity;
+    currentQuantity = Math.max(min, Math.min(newQuantity, maxValue));
+    quantityInput.value = currentQuantity;
+
+    // 커스텀 이벤트 발생
+    const event = new CustomEvent("quantity:changed", {
+      detail: { quantity: currentQuantity },
+      bubbles: true,
+    });
+    quantityInput.dispatchEvent(event);
+
+    // 콜백 호출
+    if (onQuantityChange) {
+      onQuantityChange(currentQuantity);
+    }
+  };
+
+  quantityDecrease.addEventListener("click", () => {
+    updateQuantity(currentQuantity - 1);
+  });
+
+  quantityIncrease.addEventListener("click", () => {
+    updateQuantity(currentQuantity + 1);
+  });
+
+  quantityInput.addEventListener("change", (e) => {
+    const value = parseInt(e.target.value) || 1;
+    updateQuantity(value);
+  });
+
+  quantityInput.addEventListener("input", (e) => {
+    const value = parseInt(e.target.value) || 1;
+    if (value >= 1 && (!max || value <= max)) {
+      updateQuantity(value);
+    }
+  });
+
+  return {
+    getQuantity: () => currentQuantity,
+    setQuantity: (qty) => updateQuantity(qty),
+  };
+};

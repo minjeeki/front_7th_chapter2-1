@@ -1,4 +1,4 @@
-import { QuantitySelector } from "../common/QuantitySelector.js";
+import { QuantitySelector, initQuantitySelector } from "../common/QuantitySelector.js";
 
 // 장바구니 버튼 컴포넌트
 export const CartButton = () => {
@@ -91,7 +91,7 @@ export const CartItem = (item) => {
             size: "small",
             showLabel: false,
             idPrefix: `quantity-${item.id}`,
-            productId: item.id,
+            // productId는 initQuantitySelector에서 처리하므로 전달하지 않음
           })}
         </div>
       </div>
@@ -295,6 +295,23 @@ export const initCartDialog = () => {
         cartContent.innerHTML = EmptyCart();
       } else {
         cartContent.innerHTML = CartItemsList(items, selectedAll || false);
+
+        // 각 아이템의 QuantitySelector 초기화
+        items.forEach((item) => {
+          initQuantitySelector(`quantity-${item.id}`, {
+            max: null, // 장바구니에서는 최대값 제한 없음
+            onQuantityChange: (quantity) => {
+              // 로컬 스토리지 업데이트
+              const currentCartData = getCartData();
+              const cartItem = currentCartData.items.find((i) => i.id === item.id);
+              if (cartItem) {
+                cartItem.quantity = quantity;
+                saveCartData(currentCartData);
+                window.updateCartContent();
+              }
+            },
+          });
+        });
       }
     }
 
@@ -417,37 +434,7 @@ export const initCartDialog = () => {
       return;
     }
 
-    // 수량 증가 버튼 클릭 처리
-    const increaseBtn = e.target.closest(".quantity-increase-btn");
-    if (increaseBtn) {
-      const productId = increaseBtn.getAttribute("data-product-id");
-      if (productId) {
-        const cartData = getCartData();
-        const item = cartData.items.find((item) => item.id === productId);
-        if (item) {
-          item.quantity = (item.quantity || 1) + 1;
-          saveCartData(cartData);
-          window.updateCartContent();
-        }
-      }
-      return;
-    }
-
-    // 수량 감소 버튼 클릭 처리
-    const decreaseBtn = e.target.closest(".quantity-decrease-btn");
-    if (decreaseBtn) {
-      const productId = decreaseBtn.getAttribute("data-product-id");
-      if (productId) {
-        const cartData = getCartData();
-        const item = cartData.items.find((item) => item.id === productId);
-        if (item && item.quantity > 1) {
-          item.quantity = item.quantity - 1;
-          saveCartData(cartData);
-          window.updateCartContent();
-        }
-      }
-      return;
-    }
+    // 수량 변경은 initQuantitySelector의 onQuantityChange 콜백에서 처리됨
 
     // 삭제 버튼 클릭 처리
     const removeBtn = e.target.closest(".cart-item-remove-btn");

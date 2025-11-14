@@ -22,7 +22,7 @@ export const AddToCartBtn = (product, quantity, size = "default", id = null) => 
 };
 
 // 장바구니에 상품 추가 함수
-const addToCart = (product, quantity) => {
+const addToCart = (product, quantity, buttonElement = null) => {
   // 현재 장바구니 데이터 가져오기
   const cartData = getCartData();
   const { items } = cartData;
@@ -56,6 +56,15 @@ const addToCart = (product, quantity) => {
   if (window.updateCartContent) {
     window.updateCartContent();
   }
+
+  // 장바구니 추가 완료 커스텀 이벤트 발생
+  if (buttonElement) {
+    const event = new CustomEvent("cart:itemAdded", {
+      detail: { product, quantity, button: buttonElement },
+      bubbles: true,
+    });
+    buttonElement.dispatchEvent(event);
+  }
 };
 
 // 장바구니 담기 버튼 이벤트 리스너 등록
@@ -72,7 +81,7 @@ export const initAddToCartButtons = () => {
     if (productId && productData) {
       try {
         const product = JSON.parse(decodeURIComponent(productData));
-        addToCart(product, quantity);
+        addToCart(product, quantity, button);
       } catch (error) {
         console.error("상품 정보를 파싱하는 중 오류가 발생했습니다:", error);
       }

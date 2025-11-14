@@ -1,8 +1,20 @@
 import { getProduct, getProducts } from "../api/productApi.js";
 import { AddToCartBtn } from "../components/cart/addToCartBtn.js";
-import { QuantitySelector } from "../components/common/QuantitySelector.js";
+import { QuantitySelector, initQuantitySelector } from "../components/common/QuantitySelector.js";
 
 export const ItemDetailPage = (productId) => {
+  // 에러 페이지 컴포넌트
+  const renderErrorPage = (message, buttonText, buttonAction) => {
+    return /*html*/ `
+      <div class="py-20 bg-gray-50 flex items-center justify-center">
+        <div class="text-center">
+          <p class="text-red-600 mb-4">${message}</p>
+          ${buttonAction}
+        </div>
+      </div>
+    `;
+  };
+
   // 로딩 상태의 content
   const loadingContent = /*html*/ `
         <div class="py-40 bg-gray-50 flex items-center justify-center min-h-[100vh]">
@@ -14,28 +26,25 @@ export const ItemDetailPage = (productId) => {
     `;
 
   // 평점 별 생성
+  const STAR_SVG_PATH =
+    "M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z";
+
   const renderStars = (rating) => {
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 >= 0.5;
+    const emptyStars = 5 - Math.ceil(rating);
     let starsHTML = "";
 
     for (let i = 0; i < fullStars; i++) {
-      starsHTML += `<svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-      </svg>`;
+      starsHTML += `<svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="${STAR_SVG_PATH}"></path></svg>`;
     }
 
     if (hasHalfStar) {
-      starsHTML += `<svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-      </svg>`;
+      starsHTML += `<svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="${STAR_SVG_PATH}"></path></svg>`;
     }
 
-    const emptyStars = 5 - Math.ceil(rating);
     for (let i = 0; i < emptyStars; i++) {
-      starsHTML += `<svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-      </svg>`;
+      starsHTML += `<svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path d="${STAR_SVG_PATH}"></path></svg>`;
     }
 
     return starsHTML;
@@ -106,6 +115,9 @@ export const ItemDetailPage = (productId) => {
     `;
   };
 
+  // 브레드크럼 화살표 SVG
+  const BREADCRUMB_ARROW_SVG = `<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>`;
+
   // 상품 정보를 렌더링하는 함수
   const renderProductContent = (product) => {
     return /*html*/ `
@@ -113,9 +125,7 @@ export const ItemDetailPage = (productId) => {
         <nav class="mb-4">
           <div class="flex items-center space-x-2 text-sm text-gray-600">
             <a href="/" data-link="" class="hover:text-blue-600 transition-colors">홈</a>
-            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-            </svg>
+            ${BREADCRUMB_ARROW_SVG}
             ${
               product.category1
                 ? `<button class="breadcrumb-link" data-category1="${product.category1}">${product.category1}</button>`
@@ -123,12 +133,7 @@ export const ItemDetailPage = (productId) => {
             }
             ${
               product.category2
-                ? `
-            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-            </svg>
-            <button class="breadcrumb-link" data-category2="${product.category2}">${product.category2}</button>
-            `
+                ? `${BREADCRUMB_ARROW_SVG}<button class="breadcrumb-link" data-category2="${product.category2}">${product.category2}</button>`
                 : ""
             }
           </div>
@@ -182,16 +187,11 @@ export const ItemDetailPage = (productId) => {
       if (!mainElement) return;
 
       if (!productId) {
-        mainElement.innerHTML = /*html*/ `
-          <div class="py-20 bg-gray-50 flex items-center justify-center">
-            <div class="text-center">
-              <p class="text-red-600 mb-4">상품 ID가 제공되지 않았습니다.</p>
-              <a href="/" data-link="" class="inline-block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                홈으로 돌아가기
-              </a>
-            </div>
-          </div>
-        `;
+        mainElement.innerHTML = renderErrorPage(
+          "상품 ID가 제공되지 않았습니다.",
+          "홈으로 돌아가기",
+          '<a href="/" data-link="" class="inline-block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">홈으로 돌아가기</a>',
+        );
         return;
       }
 
@@ -202,69 +202,23 @@ export const ItemDetailPage = (productId) => {
         // 상품 정보로 content 업데이트
         mainElement.innerHTML = renderProductContent(product);
 
-        // 수량 선택 이벤트 리스너 설정
-        let quantity = 1;
+        // QuantitySelector 이벤트 리스너 설정
         const maxStock = product.stock || 1;
-        const quantityInput = document.getElementById("quantity-input");
-        const quantityDecrease = document.getElementById("quantity-decrease");
-        const quantityIncrease = document.getElementById("quantity-increase");
         const addToCartBtn = document.querySelector("#add-to-cart-btn");
-
-        const updateQuantity = (newQuantity) => {
-          // 최소값과 최대값 제한
-          quantity = Math.max(1, Math.min(newQuantity, maxStock));
-          if (quantityInput) {
-            quantityInput.value = quantity;
-          }
-          // 장바구니 담기 버튼의 data-quantity 속성 업데이트
-          if (addToCartBtn) {
-            addToCartBtn.setAttribute("data-quantity", quantity);
-          }
-        };
-
-        if (quantityDecrease) {
-          quantityDecrease.addEventListener("click", () => {
-            updateQuantity(quantity - 1);
-          });
-        }
-
-        if (quantityIncrease) {
-          quantityIncrease.addEventListener("click", () => {
-            updateQuantity(quantity + 1);
-          });
-        }
-
-        if (quantityInput) {
-          quantityInput.addEventListener("change", (e) => {
-            const value = parseInt(e.target.value) || 1;
-            updateQuantity(value);
-          });
-
-          quantityInput.addEventListener("input", (e) => {
-            const value = parseInt(e.target.value) || 1;
-            if (value >= 1 && value <= maxStock) {
-              quantity = value;
-              // 장바구니 담기 버튼의 data-quantity 속성 업데이트
-              if (addToCartBtn) {
-                addToCartBtn.setAttribute("data-quantity", quantity);
-              }
+        const quantitySelector = initQuantitySelector("quantity", {
+          max: maxStock,
+          onQuantityChange: (quantity) => {
+            // 장바구니 담기 버튼의 data-quantity 속성 업데이트
+            if (addToCartBtn) {
+              addToCartBtn.setAttribute("data-quantity", quantity);
             }
-          });
-        }
+          },
+        });
 
-        // 장바구니 담기 버튼 클릭 후 수량 리셋
-        if (addToCartBtn) {
-          addToCartBtn.addEventListener("click", () => {
-            // 장바구니 담기가 완료된 후 수량을 1로 리셋
-            setTimeout(() => {
-              quantity = 1;
-              if (quantityInput) {
-                quantityInput.value = 1;
-              }
-              if (addToCartBtn) {
-                addToCartBtn.setAttribute("data-quantity", 1);
-              }
-            }, 100); // addToCart 함수가 실행된 후 리셋
+        // 장바구니 담기 완료 후 수량 리셋 (이벤트 콜백으로 처리)
+        if (addToCartBtn && quantitySelector) {
+          addToCartBtn.addEventListener("cart:itemAdded", () => {
+            quantitySelector.setQuantity(1);
           });
         }
 
@@ -294,16 +248,11 @@ export const ItemDetailPage = (productId) => {
         }
       } catch (error) {
         console.error("상품 정보를 불러오는 중 오류가 발생했습니다:", error);
-        mainElement.innerHTML = /*html*/ `
-          <div class="py-20 bg-gray-50 flex items-center justify-center">
-            <div class="text-center">
-              <p class="text-red-600 mb-4">상품 정보를 불러오는 중 오류가 발생했습니다.</p>
-              <button onclick="location.reload()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                다시 시도
-              </button>
-            </div>
-          </div>
-        `;
+        mainElement.innerHTML = renderErrorPage(
+          "상품 정보를 불러오는 중 오류가 발생했습니다.",
+          "다시 시도",
+          '<button onclick="location.reload()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">다시 시도</button>',
+        );
       }
     },
   };
