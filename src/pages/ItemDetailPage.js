@@ -1,7 +1,7 @@
 import { getProduct, getProducts } from "../api/productApi.js";
 import { AddToCartBtn } from "../components/cart/addToCartBtn.js";
 
-export const ItemDetailPage = () => {
+export const ItemDetailPage = (productId) => {
   // 로딩 상태의 content
   const loadingContent = /*html*/ `
         <div class="py-40 bg-gray-50 flex items-center justify-center min-h-[100vh]">
@@ -210,9 +210,23 @@ export const ItemDetailPage = () => {
       const mainElement = document.querySelector("main");
       if (!mainElement) return;
 
+      if (!productId) {
+        mainElement.innerHTML = /*html*/ `
+          <div class="py-20 bg-gray-50 flex items-center justify-center">
+            <div class="text-center">
+              <p class="text-red-600 mb-4">상품 ID가 제공되지 않았습니다.</p>
+              <a href="/" data-link="" class="inline-block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                홈으로 돌아가기
+              </a>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
       try {
         // 상품 정보 API 호출
-        const product = await getProduct("24875454523");
+        const product = await getProduct(productId);
 
         // 상품 정보로 content 업데이트
         mainElement.innerHTML = renderProductContent(product);

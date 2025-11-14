@@ -1,4 +1,5 @@
 import { AddToCartBtn } from "../components/cart/addToCartBtn.js";
+import { router } from "../router.js";
 
 const CategoryBreadcrumb = () => {
   return /*html*/ `
@@ -123,15 +124,27 @@ const itemSkeleton = () => {
   `;
 };
 
-export const ItemListPage = () => {
+export const ItemListPage = (query = {}) => {
   let categoriesData = null;
-  let selectedCategory1 = null;
-  let selectedCategory2 = null;
-  let currentSearch = "";
-  let currentSort = "price_asc";
-  let currentLimit = 20;
+  // URL 쿼리 파라미터에서 상태 복원
+  let selectedCategory1 = query.category1 || null;
+  let selectedCategory2 = query.category2 || null;
+  let currentSearch = query.search || "";
+  let currentSort = query.sort || "price_asc";
+  let currentLimit = query.limit ? parseInt(query.limit) : 20;
   let currentPage = 1;
   let searchTimeout = null;
+
+  // URL 쿼리 파라미터 업데이트 함수
+  const updateURL = () => {
+    const queryParams = {};
+    if (currentSearch) queryParams.search = currentSearch;
+    if (selectedCategory1) queryParams.category1 = selectedCategory1;
+    if (selectedCategory2) queryParams.category2 = selectedCategory2;
+    if (currentSort !== "price_asc") queryParams.sort = currentSort;
+    if (currentLimit !== 20) queryParams.limit = currentLimit.toString();
+    router.updateQuery(queryParams, true);
+  };
 
   const updateBreadcrumb = () => {
     const breadcrumbContainer = document.getElementById("category-breadcrumb");
@@ -195,6 +208,7 @@ export const ItemListPage = () => {
         currentPage = 1;
         updateBreadcrumb();
         renderCategory1Buttons();
+        updateURL();
         loadProducts();
       } else if (breadcrumbType === "category1") {
         const category1 = target.getAttribute("data-category1");
@@ -203,6 +217,7 @@ export const ItemListPage = () => {
         currentPage = 1;
         updateBreadcrumb();
         renderCategory2Buttons(category1);
+        updateURL();
         loadProducts();
       }
     });
@@ -235,6 +250,7 @@ export const ItemListPage = () => {
         currentPage = 1;
         updateBreadcrumb();
         renderCategory2Buttons(category1);
+        updateURL();
         loadProducts();
       });
     });
@@ -269,6 +285,7 @@ export const ItemListPage = () => {
         selectedCategory2 = category2;
         currentPage = 1;
         updateBreadcrumb();
+        updateURL();
         loadProducts();
       });
     });
@@ -384,6 +401,7 @@ export const ItemListPage = () => {
         searchTimeout = setTimeout(() => {
           currentSearch = e.target.value.trim();
           currentPage = 1;
+          updateURL();
           loadProducts();
         }, 300);
       });
@@ -395,6 +413,7 @@ export const ItemListPage = () => {
       sortSelect.addEventListener("change", (e) => {
         currentSort = e.target.value;
         currentPage = 1;
+        updateURL();
         loadProducts();
       });
     }
@@ -405,6 +424,7 @@ export const ItemListPage = () => {
       limitSelect.addEventListener("change", (e) => {
         currentLimit = parseInt(e.target.value);
         currentPage = 1;
+        updateURL();
         loadProducts();
       });
     }
@@ -418,17 +438,37 @@ export const ItemListPage = () => {
       const { getCategories } = await import("../api/productApi.js");
       categoriesData = await getCategories();
 
-      // 초기 상태 설정
-      selectedCategory1 = null;
-      selectedCategory2 = null;
-
       // breadcrumb 이벤트 설정 (한 번만)
       setupBreadcrumbEvents();
       updateBreadcrumb();
-      renderCategory1Buttons();
+
+      // 카테고리 버튼 렌더링 (URL에서 복원된 상태에 따라)
+      if (selectedCategory1) {
+        renderCategory2Buttons(selectedCategory1);
+      } else {
+        renderCategory1Buttons();
+      }
 
       // 필터 이벤트 설정
       setupFilterEvents();
+
+      // 검색어 입력 필드에 현재 검색어 설정
+      const searchInput = document.getElementById("search-input");
+      if (searchInput) {
+        searchInput.value = currentSearch;
+      }
+
+      // 정렬 선택 박스에 현재 정렬 설정
+      const sortSelect = document.getElementById("sort-select");
+      if (sortSelect) {
+        sortSelect.value = currentSort;
+      }
+
+      // 개수 선택 박스에 현재 개수 설정
+      const limitSelect = document.getElementById("limit-select");
+      if (limitSelect) {
+        limitSelect.value = currentLimit.toString();
+      }
 
       // 초기 상품 목록 로드
       loadProducts();
@@ -440,7 +480,6 @@ export const ItemListPage = () => {
 
   return {
     content: /*html*/ `
-    <main class="max-w-md mx-auto px-4 py-4">
     ${searchAndFilter()}
     <!-- 상품 목록 -->
     <div class="mb-6">
@@ -454,7 +493,6 @@ export const ItemListPage = () => {
         ${ProductListStatus()}
       </div>
     </div>
-  </main>
     `,
     headerOptions: {
       showBackButton: false,
